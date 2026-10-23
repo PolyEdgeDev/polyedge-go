@@ -114,6 +114,7 @@ func main() {
 | `UpdateSubscription(ctx, id, req)`| `PUT /streams/{id}/subscription` | Hot-reload market filters (addresses, tags, series) on active stream |
 | `Delete(ctx, id)` | `DELETE /streams/{id}` | Delete stream by ID |
 | `GetActiveSessions(ctx)` | `GET /sessions` | List all active live SSE connections across streams |
+| `DisconnectSession(ctx, connID)` | `DELETE /sessions/{id}` | Disconnect one of your active SSE connections by `conn_id` |
 | `GetSessionHistory(ctx, limit, offset)`| `GET /sessions/history` | Query historical SSE connection logs and durations |
 
 ### 2. Analytics Service (`client.Analytics`)
@@ -139,7 +140,6 @@ func main() {
 | `DeleteKey(ctx, key)` | `DELETE /v2/user/keys/{key}` | Revoke and delete an API key |
 | `GetLedger(ctx, limit, offset)` | `GET /v2/user/ledger` | Balance ledger transaction records |
 | `GetTelemetry(ctx)` | `GET /v2/user/telemetry` | Daily request count and per-endpoint usage telemetry |
-| `Withdraw(ctx, req)` | `POST /v2/user/withdraw` | Request balance withdrawal |
 
 ### 4. Subscription Service (`client.Subscription`)
 

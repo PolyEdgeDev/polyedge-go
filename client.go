@@ -121,6 +121,20 @@ func (s *StreamsService) GetActiveSessions(ctx context.Context) (*UserActiveSess
 	return &res, nil
 }
 
+// DisconnectSession: Disconnect User Stream Connection.
+// Terminates an active SSE stream connection owned by this account, identified by its conn_id from getActiveSessions.
+func (s *StreamsService) DisconnectSession(ctx context.Context, id string) (*UserDisconnectSessionResponse, error) {
+	endpoint := fmt.Sprintf("/sessions/%s", id)
+	targetURL := fmt.Sprintf("%s%s", s.client.streamBaseURL, endpoint)
+	var res UserDisconnectSessionResponse
+	var reqErr error
+	reqErr = s.client.doRequest(ctx, "DELETE", targetURL, nil, &res)
+	if reqErr != nil {
+		return nil, reqErr
+	}
+	return &res, nil
+}
+
 // GetSessionHistory: List User Stream Session History.
 // Returns historical SSE connection logs including duration and pushed transactions count.
 func (s *StreamsService) GetSessionHistory(ctx context.Context, limit int, offset int) (*UserSessionHistoryResponse, error) {
@@ -413,20 +427,6 @@ func (s *AccountService) GetTelemetry(ctx context.Context) (*UserTelemetryRespon
 	var res UserTelemetryResponse
 	var reqErr error
 	reqErr = s.client.doRequest(ctx, "GET", targetURL, nil, &res)
-	if reqErr != nil {
-		return nil, reqErr
-	}
-	return &res, nil
-}
-
-// Withdraw: Request Balance Withdrawal.
-// Submits a request to withdraw unspent USDC balance to a designated Polygon address.
-func (s *AccountService) Withdraw(ctx context.Context, req *UserWithdrawRequest) (*UserWithdrawResponse, error) {
-	endpoint := "/v2/user/withdraw"
-	targetURL := fmt.Sprintf("%s%s", s.client.apiBaseURL, endpoint)
-	var res UserWithdrawResponse
-	var reqErr error
-	reqErr = s.client.doRequest(ctx, "POST", targetURL, req, &res)
 	if reqErr != nil {
 		return nil, reqErr
 	}

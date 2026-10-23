@@ -14,6 +14,8 @@ type ActiveSessionInfo struct {
 	ApiKey string `json:"api_key,omitempty"`
 	// ClientIp: Remote IP address of the connected client
 	ClientIp string `json:"client_ip,omitempty"`
+	// ConnId: In-memory unique connection ID (prefixed with conn_)
+	ConnId string `json:"conn_id,omitempty"`
 	// ConnectedAt: ISO 8601 timestamp when the SSE connection was established
 	ConnectedAt string `json:"connected_at,omitempty"`
 	// DurationSeconds: Total active connection uptime in seconds
@@ -44,15 +46,25 @@ type DeleteStreamResponse struct {
 
 // DepositItem DepositItem represents the DepositItem data model.
 type DepositItem struct {
-	Address      string `json:"address,omitempty"`
-	DepositCount int64  `json:"deposit_count,omitempty"`
-	// FirstDepositAt: Earliest deposit time in 60-day window (RFC3339)
+	// Address: Trader's Ethereum wallet address
+	Address string `json:"address,omitempty"`
+	// DepositCount: Total number of deposits within the 60-day window
+	DepositCount int64 `json:"deposit_count,omitempty"`
+	// FirstDepositAt: Earliest deposit timestamp in 60-day window (RFC3339 UTC)
 	FirstDepositAt string `json:"first_deposit_at,omitempty"`
-	FirstTradeAt   string `json:"first_trade_at,omitempty"`
-	// LastDepositAt: Most recent deposit time (RFC3339)
+	// FirstTradeAt: First executed trade timestamp (RFC3339 UTC)
+	FirstTradeAt string `json:"first_trade_at,omitempty"`
+	// LastDepositAt: Most recent deposit timestamp (RFC3339 UTC)
 	LastDepositAt string `json:"last_deposit_at,omitempty"`
-	LastTradeAt   string `json:"last_trade_at,omitempty"`
-	// TotalDeposit: 6 decimals micro-USD integer as string (e.g. "100000000")
+	// LastTradeAt: Most recent executed trade timestamp (RFC3339 UTC)
+	LastTradeAt string `json:"last_trade_at,omitempty"`
+	// PusdBalance: Current pUSD wallet balance in micro-USD (6 decimals)
+	PusdBalance int64 `json:"pusd_balance,omitempty"`
+	// PusdTradeBalance: Net cumulative pUSD cashflow generated from trading activities (6 decimals)
+	PusdTradeBalance int64 `json:"pusd_trade_balance,omitempty"`
+	// RecentDeposits: Up to 10 latest on-chain deposit transactions (newest first)
+	RecentDeposits []RecentDeposit `json:"recent_deposits,omitempty"`
+	// TotalDeposit: Cumulative 60-day deposit amount in micro-USD (6 decimals)
 	TotalDeposit string `json:"total_deposit,omitempty"`
 }
 
@@ -331,6 +343,18 @@ type QuoteSubscriptionResponse struct {
 	Tier                string `json:"tier,omitempty"`
 }
 
+// RecentDeposit RecentDeposit represents the RecentDeposit data model.
+type RecentDeposit struct {
+	// Amount: Deposited collateral amount in micro-USD (6 decimals, e.g. 100000000 for 100 USDC)
+	Amount int64 `json:"amount,omitempty"`
+	// From: Source funding address (0x...)
+	From string `json:"from,omitempty"`
+	// Time: Deposit execution timestamp in RFC3339 UTC format
+	Time string `json:"time,omitempty"`
+	// TxHash: On-chain transaction hash (0x...)
+	TxHash string `json:"tx_hash,omitempty"`
+}
+
 // SubscribeRequest SubscribeRequest represents the SubscribeRequest data model.
 type SubscribeRequest struct {
 	BillingCycle   string `json:"billing_cycle,omitempty"`
@@ -457,9 +481,9 @@ type TraderProfileResponse struct {
 	Profile TraderIdentity `json:"profile,omitempty"`
 	// PusdBalance: Trader's pUSD balance in micro-pUSD (6 decimals, e.g. 1000000 = 1 pUSD)
 	PusdBalance int64 `json:"pusd_balance,omitempty"`
-	// TakerTier: Polymarket Taker Rebate Program tier level (0-6: 0=Tier 0, 1=Bronze, 2=Silver, 3=Gold, 4=Platinum, 5=Diamond, 6=Obsidian)
+	// TakerTier: Polymarket Taker Rebate tier level (0-6: 0=Tier 0, 1=Bronze, 2=Silver, 3=Gold, 4=Platinum, 5=Diamond, 6=Obsidian)
 	TakerTier int64 `json:"taker_tier,omitempty"`
-	// TakerTierName: Descriptive taker rebate tier name ("Tier 0", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Obsidian", or empty string if unsynced)
+	// TakerTierName: Descriptive taker rebate tier name ("Tier 0", "Bronze", "Silver", "Gold", "Platinum", "Diamond", "Obsidian", or "" if unsynced)
 	TakerTierName string `json:"taker_tier_name,omitempty"`
 	// TopTags: Performance breakdown across top 5 categories in last 30 days
 	TopTags []TagStat `json:"top_tags,omitempty"`
@@ -518,6 +542,13 @@ type UserCreateStreamRequest struct {
 	Name      string   `json:"name,omitempty"`
 	Series    []string `json:"series,omitempty"`
 	Tags      []string `json:"tags,omitempty"`
+}
+
+// UserDisconnectSessionResponse UserDisconnectSessionResponse represents the UserDisconnectSessionResponse data model.
+type UserDisconnectSessionResponse struct {
+	ConnId  string `json:"conn_id,omitempty"`
+	Message string `json:"message,omitempty"`
+	Status  string `json:"status,omitempty"`
 }
 
 // UserKeysResponse UserKeysResponse represents the UserKeysResponse data model.
@@ -665,19 +696,6 @@ type UserUpdateStreamMetadataRequest struct {
 	Name    string `json:"name,omitempty"`
 }
 
-// UserWithdrawRequest UserWithdrawRequest represents the UserWithdrawRequest data model.
-type UserWithdrawRequest struct {
-	Network   string `json:"network,omitempty"`
-	ToAddress string `json:"to_address,omitempty"`
-	Token     string `json:"token,omitempty"`
-}
-
-// UserWithdrawResponse UserWithdrawResponse represents the UserWithdrawResponse data model.
-type UserWithdrawResponse struct {
-	User       UserProfile `json:"user,omitempty"`
-	Withdrawal Withdrawal  `json:"withdrawal,omitempty"`
-}
-
 // ValidatePromoCodeRequest ValidatePromoCodeRequest represents the ValidatePromoCodeRequest data model.
 type ValidatePromoCodeRequest struct {
 	BillingCycle string `json:"billing_cycle,omitempty"`
@@ -694,33 +712,4 @@ type ValidatePromoCodeResponse struct {
 	OriginalPrice  int64  `json:"original_price,omitempty"`
 	ProratedCredit int64  `json:"prorated_credit,omitempty"`
 	Valid          bool   `json:"valid,omitempty"`
-}
-
-// Withdrawal Withdrawal represents the Withdrawal data model.
-type Withdrawal struct {
-	// Amount: Full balance amount withdrawn in micro-USD
-	Amount int64 `json:"amount,omitempty"`
-	// CreatedAt: Withdrawal request creation timestamp
-	CreatedAt string `json:"created_at,omitempty"`
-	ID        int64  `json:"id,omitempty"`
-	// LastDepositAt: User's most recent deposit timestamp
-	LastDepositAt string `json:"last_deposit_at,omitempty"`
-	// Network: "bsc" or "polygon"
-	Network string `json:"network,omitempty"`
-	// RejectReason: Reason recorded upon rejection
-	RejectReason string `json:"reject_reason,omitempty"`
-	// ReviewedAt: Administrative review timestamp
-	ReviewedAt string `json:"reviewed_at,omitempty"`
-	// Status: "pending", "completed", "rejected"
-	Status string `json:"status,omitempty"`
-	// ToAddress: Destination EVM wallet address
-	ToAddress string `json:"to_address,omitempty"`
-	// Token: "USDC" or "USDT"
-	Token string `json:"token,omitempty"`
-	// TxHash: Transaction hash on destination network
-	TxHash string `json:"tx_hash,omitempty"`
-	// UpdatedAt: Last modification timestamp
-	UpdatedAt string `json:"updated_at,omitempty"`
-	UserEmail string `json:"user_email,omitempty"`
-	UserId    int64  `json:"user_id,omitempty"`
 }
