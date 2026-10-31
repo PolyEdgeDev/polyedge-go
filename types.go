@@ -191,6 +191,8 @@ type Market struct {
 	TagsSlug []string `json:"tags_slug,omitempty"`
 	// TokenIds: ERC-1155 token IDs: [Token 1, Token 2]
 	TokenIds [2]string `json:"token_ids,omitempty"`
+	// Version: Polymarket protocol version: "v1" (CTF tokens) or "v2" (protocol v2 positions)
+	Version string `json:"version,omitempty"`
 }
 
 // MarketDetailResponse MarketDetailResponse represents the MarketDetailResponse data model.
@@ -257,6 +259,8 @@ type MarketMetadata struct {
 	NegRisk bool `json:"neg_risk,omitempty"`
 	// Outcomes: Raw JSON array of outcome display names, e.g. ["Yes", "No"]
 	Outcomes [2]string `json:"outcomes,omitempty"`
+	// PositionIds: Array of 2 on-chain position IDs corresponding to outcomes
+	PositionIds []string `json:"position_ids,omitempty"`
 	// Question: Full title question describing the market condition
 	Question string `json:"question,omitempty"`
 	// ResolutionSource: Source URL or oracle specification for resolution
@@ -275,8 +279,10 @@ type MarketMetadata struct {
 	StartDate string `json:"start_date,omitempty"`
 	// TagsSlug: Raw JSON array of topic tag URL slugs
 	TagsSlug []string `json:"tags_slug,omitempty"`
-	// TokenIds: Array of 2 ERC-1155 token IDs corresponding to outcomes
+	// TokenIds: Array of 2 ERC-1155 token IDs corresponding to outcomes (clobTokenIds)
 	TokenIds [2]string `json:"token_ids,omitempty"`
+	// Version: Polymarket protocol version: "v1" (CTF tokens) or "v2" (protocol v2 positions)
+	Version string `json:"version,omitempty"`
 }
 
 // MarketSettlementDetail MarketSettlementDetail represents the MarketSettlementDetail data model.
